@@ -3,195 +3,121 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#0e0e16">
+  <meta name="theme-color" content="#ece9e0">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="人格ログ">
-  <title>APEX 人格ログ</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="APEX LOG">
+  <title>APEX LOG</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>◈</text></svg>">
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="app">
 
-    <!-- ===== HOME ===== -->
-    <div class="view" id="view-home">
+    <!-- ===== REC ===== -->
+    <div class="view" id="view-rec">
       <header class="app-header">
-        <div>
-          <div class="header-title">APEX 人格ログ</div>
-          <div class="header-sub" id="home-date"></div>
-        </div>
+        <span class="h-title">APEX LOG</span>
+        <span class="h-date" id="rec-date"></span>
       </header>
-      <div class="view-content">
-        <div id="home-today-card" class="today-card hidden">
-          <div class="stat-row">
-            <div class="stat-item">
-              <div class="stat-value" id="today-rp">+0</div>
-              <div class="stat-label">本日 RP</div>
-            </div>
-            <div class="stat-divider"></div>
-            <div class="stat-item">
-              <div class="stat-value" id="today-sessions">0</div>
-              <div class="stat-label">試合数</div>
-            </div>
-            <div class="stat-divider"></div>
-            <div class="stat-item">
-              <div class="stat-value" id="today-mood">—</div>
-              <div class="stat-label">ムード</div>
-            </div>
+      <div class="view-scroll">
+
+        <div class="field">
+          <div class="field-label">RP</div>
+          <div class="rp-num" id="rp-display">+0</div>
+          <div class="adj-row">
+            <button class="adj-btn" data-delta="-10">−10</button>
+            <button class="adj-btn" data-delta="-1">−1</button>
+            <button class="adj-btn" data-delta="1">＋1</button>
+            <button class="adj-btn" data-delta="10">＋10</button>
           </div>
         </div>
 
-        <div id="home-empty" class="empty-state">
-          <div class="empty-icon">🎮</div>
-          <div class="empty-text">今日の試合を記録しよう</div>
+        <div class="field">
+          <div class="field-label">KILL</div>
+          <div class="kill-grid" id="kill-grid"></div>
         </div>
 
-        <button class="btn-primary btn-record" id="btn-go-log">＋ 試合を記録する</button>
-
-        <div id="recent-section" class="hidden">
-          <div class="section-title">直近の記録</div>
-          <div id="recent-list" class="entry-list"></div>
+        <div class="field">
+          <div class="field-label">PARTY</div>
+          <div class="seg-row" id="party-row">
+            <button class="seg-btn" data-party="solo">SOLO</button>
+            <button class="seg-btn" data-party="duo">DUO</button>
+            <button class="seg-btn" data-party="full">FULL</button>
+          </div>
         </div>
+
+        <div class="field">
+          <div class="field-label">感情 <span class="sub-hint">複数可</span></div>
+          <div class="tag-wrap" id="emotion-tags"></div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">味方 <span class="sub-hint">複数可</span></div>
+          <div class="tag-wrap" id="ally-tags"></div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">動き <span class="sub-hint">複数可</span></div>
+          <div class="tag-wrap" id="play-tags"></div>
+        </div>
+
+        <button class="submit-btn" id="btn-save">記録する</button>
+        <div class="bottom-pad"></div>
       </div>
     </div>
 
-    <!-- ===== LOG ===== -->
-    <div class="view hidden" id="view-log">
+    <!-- ===== HIST ===== -->
+    <div class="view hidden" id="view-hist">
       <header class="app-header">
-        <button class="btn-link" id="log-back">← 戻る</button>
-        <div class="header-title">試合を記録</div>
-        <div style="width:60px"></div>
+        <span class="h-title">LOG</span>
+        <button class="h-btn danger" id="clear-btn">全削除</button>
       </header>
-      <div class="view-content" id="log-content">
-
-        <!-- RP -->
-        <div class="log-section">
-          <div class="section-label">RP 増減</div>
-          <div class="rp-display-row">
-            <div class="rp-big" id="rp-display" title="上下スワイプで調整">+0</div>
-            <div class="rp-hint">↕ スワイプで調整</div>
-          </div>
-          <div class="rp-presets" id="rp-presets"></div>
-          <div class="rp-fine">
-            <button class="fine-btn" data-delta="-10">−10</button>
-            <button class="fine-btn" data-delta="-1">−1</button>
-            <button class="fine-btn" data-delta="1">＋1</button>
-            <button class="fine-btn" data-delta="10">＋10</button>
-          </div>
+      <div class="view-scroll">
+        <div class="seg-row filter-row">
+          <button class="seg-btn active" data-filter="today">今日</button>
+          <button class="seg-btn" data-filter="week">今週</button>
+          <button class="seg-btn" data-filter="all">全て</button>
         </div>
-
-        <!-- Kills -->
-        <div class="log-section">
-          <div class="section-label">キル数</div>
-          <div class="kills-grid" id="kills-grid"></div>
-        </div>
-
-        <!-- Party -->
-        <div class="log-section">
-          <div class="section-label">パーティ</div>
-          <div class="party-row">
-            <button class="party-btn" data-party="solo">👤 ソロ</button>
-            <button class="party-btn" data-party="duo">👥 デュオ</button>
-            <button class="party-btn" data-party="full">🎮 フルパ</button>
-          </div>
-        </div>
-
-        <!-- Emotions -->
-        <div class="log-section">
-          <div class="section-label">感情 <span class="multi-hint">複数選択可</span></div>
-          <div class="tag-grid" id="emotion-tags"></div>
-        </div>
-
-        <!-- Ally -->
-        <div class="log-section">
-          <div class="section-label">味方の印象 <span class="multi-hint">複数選択可</span></div>
-          <div class="tag-grid" id="ally-tags"></div>
-        </div>
-
-        <!-- Playstyle -->
-        <div class="log-section">
-          <div class="section-label">自分の動き <span class="multi-hint">複数選択可</span></div>
-          <div class="tag-grid" id="playstyle-tags"></div>
-        </div>
-
-        <button class="btn-primary" id="btn-save">記録を保存する</button>
-        <div class="spacer"></div>
+        <div id="hist-list"></div>
+        <div id="hist-empty" class="empty hidden">記録がありません</div>
+        <div class="bottom-pad"></div>
       </div>
     </div>
 
-    <!-- ===== HISTORY ===== -->
-    <div class="view hidden" id="view-history">
+    <!-- ===== GRAPH ===== -->
+    <div class="view hidden" id="view-graph">
       <header class="app-header">
-        <div class="header-title">履歴</div>
-        <button class="btn-link danger" id="clear-all-btn">全削除</button>
+        <span class="h-title">GRAPH</span>
       </header>
-      <div class="view-content">
-        <div class="filter-row">
-          <button class="filter-tab active" data-filter="today">今日</button>
-          <button class="filter-tab" data-filter="week">今週</button>
-          <button class="filter-tab" data-filter="all">全て</button>
-        </div>
-        <div id="history-list" class="entry-list"></div>
-        <div id="history-empty" class="empty-state hidden">
-          <div class="empty-icon">📭</div>
-          <div class="empty-text">記録がありません</div>
-        </div>
-      </div>
-    </div>
+      <div class="view-scroll">
 
-    <!-- ===== STATS ===== -->
-    <div class="view hidden" id="view-stats">
-      <header class="app-header">
-        <div class="header-title">人格分析</div>
-      </header>
-      <div class="view-content">
-        <div class="personality-card">
-          <div class="section-title">今日の人格</div>
-          <div id="personality-text" class="personality-body">データを記録すると分析が表示されます</div>
-          <div id="personality-tags" class="personality-tags-row"></div>
+        <div class="graph-section">
+          <div class="graph-title">時間帯別 RP</div>
+          <div class="seg-row period-row">
+            <button class="seg-btn active" data-period="day">今日</button>
+            <button class="seg-btn" data-period="week">今週</button>
+            <button class="seg-btn" data-period="month">今月</button>
+          </div>
+          <div id="bar-chart" class="chart-box"></div>
         </div>
 
-        <div class="stats-card">
-          <div class="stats-card-title">感情別 平均 RP</div>
-          <div id="chart-emotion" class="chart-body"></div>
+        <div class="graph-section">
+          <div class="graph-title">感情の分布</div>
+          <div id="pie-chart" class="chart-box"></div>
         </div>
 
-        <div class="stats-card">
-          <div class="stats-card-title">パーティ別 平均 RP</div>
-          <div id="chart-party" class="chart-body"></div>
-        </div>
-
-        <div class="stats-card">
-          <div class="stats-card-title">時間帯別 平均 RP</div>
-          <div id="chart-time" class="chart-body"></div>
-        </div>
-
-        <div class="spacer"></div>
+        <div class="bottom-pad"></div>
       </div>
     </div>
 
   </div>
 
-  <!-- Bottom Nav -->
-  <nav id="bottom-nav">
-    <button class="nav-btn active" data-view="home">
-      <span class="nav-icon">🏠</span>
-      <span class="nav-label">ホーム</span>
-    </button>
-    <button class="nav-btn" data-view="log">
-      <span class="nav-icon">＋</span>
-      <span class="nav-label">記録</span>
-    </button>
-    <button class="nav-btn" data-view="history">
-      <span class="nav-icon">📋</span>
-      <span class="nav-label">履歴</span>
-    </button>
-    <button class="nav-btn" data-view="stats">
-      <span class="nav-icon">📊</span>
-      <span class="nav-label">分析</span>
-    </button>
+  <nav id="nav">
+    <button class="nav-btn active" data-view="rec">REC</button>
+    <button class="nav-btn" data-view="hist">LOG</button>
+    <button class="nav-btn" data-view="graph">GRAPH</button>
   </nav>
 
   <div id="toast" class="toast"></div>
