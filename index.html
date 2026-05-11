@@ -94,18 +94,40 @@
       <div class="view-scroll">
 
         <div class="graph-section">
-          <div class="graph-title">時間帯別 RP</div>
+          <div class="chart-header">
+            <span class="graph-title">時間帯別 RP</span>
+            <div class="chart-page-ctrl">
+              <button class="chart-pg-btn" id="bar-left">◀</button>
+              <span class="chart-pg-label" id="bar-label">朝昼夜深夜</span>
+              <button class="chart-pg-btn" id="bar-right">▶</button>
+            </div>
+          </div>
           <div class="seg-row period-row">
             <button class="seg-btn active" data-period="day">今日</button>
             <button class="seg-btn" data-period="week">今週</button>
             <button class="seg-btn" data-period="month">今月</button>
           </div>
-          <div id="bar-chart" class="chart-box"></div>
+          <div class="h-scroll-track" id="bar-track">
+            <div class="h-scroll-panel" id="bar-p0"></div>
+            <div class="h-scroll-panel" id="bar-p1"></div>
+            <div class="h-scroll-panel" id="bar-p2"></div>
+          </div>
         </div>
 
         <div class="graph-section">
-          <div class="graph-title">感情の分布</div>
-          <div id="pie-chart" class="chart-box"></div>
+          <div class="chart-header">
+            <span class="graph-title">感情データ</span>
+            <div class="chart-page-ctrl">
+              <button class="chart-pg-btn" id="emo-left">◀</button>
+              <span class="chart-pg-label" id="emo-label">感情分布</span>
+              <button class="chart-pg-btn" id="emo-right">▶</button>
+            </div>
+          </div>
+          <div class="h-scroll-track" id="emo-track">
+            <div class="h-scroll-panel" id="emo-p0"></div>
+            <div class="h-scroll-panel" id="emo-p1"></div>
+            <div class="h-scroll-panel" id="emo-p2"></div>
+          </div>
         </div>
 
         <div class="bottom-pad"></div>

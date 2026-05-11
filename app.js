@@ -34,11 +34,17 @@ const PLAY_TAGS = [
   { id: 'vc_active',  emoji: '📞', label: 'VC多め' },
 ];
 
+const TIME_SLOTS_4 = [
+  { label: '朝\n6-12',  min: 6,  max: 12 },
+  { label: '昼\n12-18', min: 12, max: 18 },
+  { label: '夜\n18-24', min: 18, max: 24 },
+  { label: '深夜\n0-6', min: 0,  max: 6  },
+];
+
+const PIE_FILLS = ['#1a1714','#332e2a','#4d4844','#66615c','#807b76','#999490','#b3aeaa','#ccc9c5'];
+
 const RP_MIN = -200;
 const RP_MAX = 600;
-
-// Grayscale fills for pie chart segments (8 shades, dark→light)
-const PIE_FILLS = ['#1a1714', '#332e2a', '#4d4844', '#66615c', '#807b76', '#999490', '#b3aeaa', '#ccc9c5'];
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
@@ -75,9 +81,7 @@ function nowTime() {
 }
 
 function fmtRP(n) { return n > 0 ? `+${n}` : String(n); }
-
 function rpCls(n) { return n > 0 ? 'pos' : n < 0 ? 'neg' : ''; }
-
 function clamp(v) { return Math.max(RP_MIN, Math.min(RP_MAX, v)); }
 
 function daysAgoStr(n) {
@@ -88,7 +92,7 @@ function daysAgoStr(n) {
 
 function dayLabel(dateStr) {
   const [, m, d] = dateStr.split('-');
-  const dow = ['日', '月', '火', '水', '木', '金', '土'][new Date(dateStr).getDay()];
+  const dow = ['日','月','火','水','木','金','土'][new Date(dateStr).getDay()];
   return `${parseInt(m)}/${parseInt(d)}(${dow})`;
 }
 
@@ -112,8 +116,7 @@ function arcPath(cx, cy, r, startDeg, endDeg) {
   const y1 = cy + r * Math.sin(toRad(startDeg));
   const x2 = cx + r * Math.cos(toRad(endDeg));
   const y2 = cy + r * Math.sin(toRad(endDeg));
-  const large = (endDeg - startDeg) > 180 ? 1 : 0;
-  return `M ${cx} ${cy} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z`;
+  return `M ${cx} ${cy} L ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${(endDeg - startDeg) > 180 ? 1 : 0} 1 ${x2.toFixed(2)} ${y2.toFixed(2)} Z`;
 }
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
@@ -139,20 +142,15 @@ function initRPSwipe() {
   let startY = null, startVal = 0;
 
   el.addEventListener('touchstart', e => {
-    startY = e.touches[0].clientY;
-    startVal = state.form.rp;
-    e.preventDefault();
+    startY = e.touches[0].clientY; startVal = state.form.rp; e.preventDefault();
   }, { passive: false });
-
   el.addEventListener('touchmove', e => {
     if (startY === null) return;
     setRP(startVal + Math.round((startY - e.touches[0].clientY) / 3));
     e.preventDefault();
   }, { passive: false });
-
   el.addEventListener('touchend', () => { startY = null; });
 
-  // Mouse fallback
   let down = false;
   el.addEventListener('mousedown', e => { down = true; startY = e.clientY; startVal = state.form.rp; });
   window.addEventListener('mousemove', e => { if (down) setRP(startVal + Math.round((startY - e.clientY) / 3)); });
@@ -260,12 +258,12 @@ function saveEntry() {
 
 function updateRecDate() {
   const d = new Date();
-  const dow = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][d.getDay()];
+  const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()];
   document.getElementById('rec-date').textContent =
     `${d.getMonth() + 1}.${pad(d.getDate())} ${dow}`;
 }
 
-// ─── History view ─────────────────────────────────────────────────────────────
+// ─── History ──────────────────────────────────────────────────────────────────
 
 function renderHist() {
   const today = todayStr();
@@ -278,26 +276,17 @@ function renderHist() {
   const empty = document.getElementById('hist-empty');
   list.innerHTML = '';
 
-  if (logs.length === 0) {
-    empty.classList.remove('hidden');
-    return;
-  }
+  if (logs.length === 0) { empty.classList.remove('hidden'); return; }
   empty.classList.add('hidden');
 
   logs.forEach(log => {
     const item = document.createElement('div');
     item.className = 'hist-item';
-
-    const emotionEmoji = log.emotions
-      .map(id => EMOTION_TAGS.find(t => t.id === id)?.emoji || '')
-      .join('');
-
+    const emotionEmoji = log.emotions.map(id => EMOTION_TAGS.find(t => t.id === id)?.emoji || '').join('');
     const partyLabel = { solo: 'SOLO', duo: 'DUO', full: 'FULL' }[log.party] || '';
-
     const playChips = log.play.slice(0, 2)
       .map(id => { const t = PLAY_TAGS.find(t => t.id === id); return t ? `<span class="mini-chip">${t.emoji} ${t.label}</span>` : ''; })
       .join('');
-
     item.innerHTML = `
       <div class="hist-rp ${rpCls(log.rp)}">${fmtRP(log.rp)}</div>
       <div class="hist-meta">
@@ -311,170 +300,248 @@ function renderHist() {
   });
 }
 
-// ─── Bar chart ────────────────────────────────────────────────────────────────
+// ─── Graph data helpers ───────────────────────────────────────────────────────
 
-const TIME_SLOTS = [
-  { label: '朝\n6-12', min: 6,  max: 12 },
-  { label: '昼\n12-18', min: 12, max: 18 },
-  { label: '夜\n18-24', min: 18, max: 24 },
-  { label: '深夜\n0-6', min: 0,  max: 6  },
-];
-
-function getBarData(period) {
+function getFilteredLogs(period) {
   const today = todayStr();
-  const cutoff = period === 'day' ? today : period === 'week' ? daysAgoStr(6) : daysAgoStr(29);
-
-  const filtered = state.logs.filter(l =>
-    period === 'day' ? l.date === today : l.date >= cutoff
-  );
-
-  return TIME_SLOTS.map(slot => {
-    const total = filtered
-      .filter(l => { const h = Number(l.time.split(':')[0]); return h >= slot.min && h < slot.max; })
-      .reduce((s, l) => s + l.rp, 0);
-    return { label: slot.label, value: total };
-  });
+  if (period === 'day')   return state.logs.filter(l => l.date === today);
+  if (period === 'week')  return state.logs.filter(l => l.date >= daysAgoStr(6));
+  if (period === 'month') return state.logs.filter(l => l.date >= daysAgoStr(29));
+  return state.logs;
 }
 
-function renderBarChart() {
-  const container = document.getElementById('bar-chart');
-  const data = getBarData(state.barPeriod);
-
-  if (data.every(d => d.value === 0)) {
-    container.innerHTML = '<div class="no-data">データがありません</div>';
-    return;
-  }
-
-  const W = 320, H = 160;
-  const PL = 44, PR = 12, PT = 16, PB = 36;
-  const CW = W - PL - PR;
-  const CH = H - PT - PB;
-  const maxAbs = Math.max(...data.map(d => Math.abs(d.value)), 1);
-  const zeroY = PT + CH / 2;
-
-  const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}` });
-
-  // Axis
-  svg.appendChild(svgEl('line', { x1: PL, y1: PT, x2: PL, y2: H - PB, stroke: '#1a1714', 'stroke-width': 1 }));
-  svg.appendChild(svgEl('line', { x1: PL, y1: zeroY, x2: W - PR, y2: zeroY, stroke: '#1a1714', 'stroke-width': 1 }));
-
-  // Y labels
-  const maxLabel = fmtRP(maxAbs);
-  svg.appendChild(svgText(maxLabel, { x: PL - 4, y: PT + 4, 'text-anchor': 'end', 'font-size': 8, fill: '#8a8680' }));
-  svg.appendChild(svgText(fmtRP(-maxAbs), { x: PL - 4, y: H - PB - 2, 'text-anchor': 'end', 'font-size': 8, fill: '#8a8680' }));
-  svg.appendChild(svgText('0', { x: PL - 4, y: zeroY + 4, 'text-anchor': 'end', 'font-size': 8, fill: '#8a8680' }));
-
-  const barW = (CW / data.length) * 0.55;
-  const gap = CW / data.length;
-
-  data.forEach((d, i) => {
-    const x = PL + i * gap + (gap - barW) / 2;
-    const bH = Math.max((Math.abs(d.value) / maxAbs) * (CH / 2 - 4), 0);
-    const isPos = d.value >= 0;
-    const barY = isPos ? zeroY - bH : zeroY;
-
-    if (bH > 0) {
-      svg.appendChild(svgEl('rect', {
-        x, y: barY, width: barW, height: bH,
-        fill: isPos ? '#1a1714' : 'none',
-        stroke: '#1a1714', 'stroke-width': 1,
-      }));
-    }
-
-    // Value label
-    if (d.value !== 0) {
-      svg.appendChild(svgText(fmtRP(d.value), {
-        x: x + barW / 2,
-        y: isPos ? barY - 4 : barY + bH + 10,
-        'text-anchor': 'middle', 'font-size': 9, fill: '#1a1714', 'font-weight': 700,
-      }));
-    }
-
-    // X labels (multiline via tspan)
-    const lines = d.label.split('\n');
-    const textEl = svgEl('text', {
-      x: x + barW / 2, y: H - PB + 12,
-      'text-anchor': 'middle', 'font-size': 8, fill: '#8a8680',
-    });
-    lines.forEach((line, li) => {
-      const tspan = svgEl('tspan', { x: x + barW / 2, dy: li === 0 ? 0 : 10 });
-      tspan.textContent = line;
-      textEl.appendChild(tspan);
-    });
-    svg.appendChild(textEl);
-  });
-
-  container.innerHTML = '';
-  container.appendChild(svg);
+function rpInHours(logs, minH, maxH) {
+  return logs
+    .filter(l => { const h = +l.time.split(':')[0]; return h >= minH && h < maxH; })
+    .reduce((s, l) => s + l.rp, 0);
 }
 
-// ─── Pie chart ────────────────────────────────────────────────────────────────
+function getAMPMData(period) {
+  const logs = getFilteredLogs(period);
+  return [
+    { label: '午前\n0-12',  value: rpInHours(logs, 0,  12) },
+    { label: '午後\n12-24', value: rpInHours(logs, 12, 24) },
+  ];
+}
+
+function get4SlotData(period) {
+  const logs = getFilteredLogs(period);
+  return TIME_SLOTS_4.map(s => ({ label: s.label, value: rpInHours(logs, s.min, s.max) }));
+}
+
+function getHourlyData(period) {
+  const logs = getFilteredLogs(period);
+  return Array.from({ length: 24 }, (_, h) => ({
+    label: String(h),
+    value: rpInHours(logs, h, h + 1),
+  }));
+}
 
 function getPieData() {
   const counts = {};
   state.logs.forEach(l => l.emotions.forEach(id => { counts[id] = (counts[id] || 0) + 1; }));
-  return EMOTION_TAGS
-    .filter(t => counts[t.id])
-    .map(t => ({ ...t, count: counts[t.id] }))
-    .sort((a, b) => b.count - a.count);
+  return EMOTION_TAGS.filter(t => counts[t.id]).map(t => ({ ...t, count: counts[t.id] })).sort((a, b) => b.count - a.count);
 }
 
-function renderPieChart() {
-  const container = document.getElementById('pie-chart');
-  const data = getPieData();
+function getEmotionCountData() {
+  const counts = {};
+  state.logs.forEach(l => l.emotions.forEach(id => { counts[id] = (counts[id] || 0) + 1; }));
+  return EMOTION_TAGS.filter(t => counts[t.id])
+    .map(t => ({ label: t.emoji, value: counts[t.id] }))
+    .sort((a, b) => b.value - a.value);
+}
 
-  if (data.length === 0) {
-    container.innerHTML = '<div class="no-data">データがありません</div>';
-    return;
-  }
+function getEmotionRPData() {
+  const rpMap = {};
+  state.logs.forEach(l => l.emotions.forEach(id => {
+    if (!rpMap[id]) rpMap[id] = [];
+    rpMap[id].push(l.rp);
+  }));
+  return EMOTION_TAGS.filter(t => rpMap[t.id])
+    .map(t => ({
+      label: t.emoji,
+      value: Math.round(rpMap[t.id].reduce((s, v) => s + v, 0) / rpMap[t.id].length),
+    }))
+    .sort((a, b) => b.value - a.value);
+}
 
-  const total = data.reduce((s, d) => s + d.count, 0);
-  const CX = 75, CY = 75, R = 62;
-  const W = 300, H = 155;
+// ─── Bar SVG builder ──────────────────────────────────────────────────────────
+
+function buildBarSVG(data, { noYLabels = false, allPositive = false } = {}) {
+  const W = 320, H = 150;
+  const PL = noYLabels ? 6 : 38, PR = 8, PT = 14, PB = noYLabels ? 24 : 36;
+  const CW = W - PL - PR;
+  const CH = H - PT - PB;
+
+  const maxAbs = Math.max(...data.map(d => Math.abs(d.value)), 1);
+  const zeroY = allPositive ? H - PB : PT + CH / 2;
+  const halfH = allPositive ? CH : CH / 2;
 
   const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}` });
 
-  // Handle single segment (full circle)
+  if (!noYLabels) {
+    svg.appendChild(svgEl('line', { x1: PL, y1: PT, x2: PL, y2: H - PB, stroke: '#1a1714', 'stroke-width': 1 }));
+    svg.appendChild(svgText(allPositive ? String(maxAbs) : fmtRP(maxAbs), { x: PL - 4, y: PT + 4, 'text-anchor': 'end', 'font-size': 8, fill: '#8a8680' }));
+    if (!allPositive) svg.appendChild(svgText(fmtRP(-maxAbs), { x: PL - 4, y: H - PB - 2, 'text-anchor': 'end', 'font-size': 8, fill: '#8a8680' }));
+    svg.appendChild(svgText('0', { x: PL - 4, y: zeroY + 4, 'text-anchor': 'end', 'font-size': 8, fill: '#8a8680' }));
+  }
+
+  svg.appendChild(svgEl('line', { x1: PL, y1: zeroY, x2: W - PR, y2: zeroY, stroke: '#1a1714', 'stroke-width': 1 }));
+
+  const slotW = CW / data.length;
+  const barW = Math.min(slotW * 0.65, 60);
+  const isHourly = data.length === 24;
+  const labelFontSize = isHourly ? 7 : 8.5;
+  const valueFontSize = isHourly ? 7 : 9;
+  const showValues = !isHourly;
+
+  data.forEach((d, i) => {
+    const cx = PL + (i + 0.5) * slotW;
+    const x = cx - barW / 2;
+    const bH = Math.max((Math.abs(d.value) / maxAbs) * (halfH - 2), 0);
+    const isPos = d.value >= 0;
+    const barY = allPositive ? zeroY - bH : isPos ? zeroY - bH : zeroY;
+
+    if (bH > 0) {
+      svg.appendChild(svgEl('rect', {
+        x: x.toFixed(1), y: barY.toFixed(1),
+        width: barW.toFixed(1), height: bH.toFixed(1),
+        fill: (allPositive || isPos) ? '#1a1714' : 'none',
+        stroke: '#1a1714', 'stroke-width': 1,
+      }));
+    }
+
+    if (showValues && d.value !== 0) {
+      svg.appendChild(svgText(allPositive ? String(d.value) : fmtRP(d.value), {
+        x: cx.toFixed(1),
+        y: (allPositive || isPos ? barY - 3 : barY + bH + 10).toFixed(1),
+        'text-anchor': 'middle', 'font-size': valueFontSize, fill: '#1a1714', 'font-weight': 700,
+      }));
+    }
+
+    // X label: hourly = every 3 hours, others = all
+    if (!isHourly || i % 3 === 0) {
+      const lines = (d.label || '').split('\n');
+      const textEl = svgEl('text', {
+        x: cx.toFixed(1), y: H - PB + 12,
+        'text-anchor': 'middle', 'font-size': labelFontSize, fill: '#8a8680',
+      });
+      lines.forEach((line, li) => {
+        const tspan = svgEl('tspan', { x: cx.toFixed(1), dy: li === 0 ? 0 : 10 });
+        tspan.textContent = line;
+        textEl.appendChild(tspan);
+      });
+      svg.appendChild(textEl);
+    }
+  });
+
+  return svg;
+}
+
+// ─── Pie SVG builder ──────────────────────────────────────────────────────────
+
+function buildPieSVG(data) {
+  const total = data.reduce((s, d) => s + d.count, 0);
+  const CX = 75, CY = 78, R = 62;
+  const svg = svgEl('svg', { viewBox: '0 0 300 158' });
+
   if (data.length === 1) {
-    svg.appendChild(svgEl('circle', {
-      cx: CX, cy: CY, r: R,
-      fill: PIE_FILLS[0], stroke: '#ece9e0', 'stroke-width': 1,
-    }));
+    svg.appendChild(svgEl('circle', { cx: CX, cy: CY, r: R, fill: PIE_FILLS[0], stroke: '#ece9e0', 'stroke-width': 1 }));
   } else {
     let angle = -90;
     data.forEach((d, i) => {
       const sweep = (d.count / total) * 360;
-      const endAngle = angle + sweep;
       const path = svgEl('path', {
-        d: arcPath(CX, CY, R, angle, endAngle - 0.3),
+        d: arcPath(CX, CY, R, angle, angle + sweep - 0.4),
         fill: PIE_FILLS[i % PIE_FILLS.length],
         stroke: '#ece9e0', 'stroke-width': 1.5,
       });
       svg.appendChild(path);
-      angle = endAngle;
+      angle += sweep;
     });
   }
 
-  // Legend
-  const maxLegend = Math.min(data.length, 7);
-  data.slice(0, maxLegend).forEach((d, i) => {
-    const y = 14 + i * 20;
+  data.slice(0, 7).forEach((d, i) => {
+    const y = 16 + i * 20;
     const pct = Math.round((d.count / total) * 100);
-
-    svg.appendChild(svgEl('rect', {
-      x: 160, y: y - 8, width: 10, height: 10,
-      fill: PIE_FILLS[i % PIE_FILLS.length], stroke: '#1a1714', 'stroke-width': 0.5,
-    }));
-    svg.appendChild(svgText(`${d.emoji} ${d.label}`, {
-      x: 175, y: y, 'font-size': 9.5, fill: '#1a1714',
-    }));
-    svg.appendChild(svgText(`${pct}%`, {
-      x: W - 4, y: y, 'text-anchor': 'end', 'font-size': 9, fill: '#8a8680',
-    }));
+    svg.appendChild(svgEl('rect', { x: 162, y: y - 8, width: 10, height: 10, fill: PIE_FILLS[i % PIE_FILLS.length], stroke: '#1a1714', 'stroke-width': 0.5 }));
+    svg.appendChild(svgText(`${d.emoji} ${d.label}`, { x: 177, y: y, 'font-size': 9.5, fill: '#1a1714' }));
+    svg.appendChild(svgText(`${pct}%`, { x: 296, y: y, 'text-anchor': 'end', 'font-size': 9, fill: '#8a8680' }));
   });
 
-  container.innerHTML = '';
-  container.appendChild(svg);
+  return svg;
+}
+
+// ─── Panel setters ────────────────────────────────────────────────────────────
+
+function setPanel(id, svgOrNull) {
+  const el = document.getElementById(id);
+  el.innerHTML = '';
+  if (svgOrNull) {
+    el.appendChild(svgOrNull);
+  } else {
+    const div = document.createElement('div');
+    div.className = 'no-data';
+    div.textContent = 'データがありません';
+    el.appendChild(div);
+  }
+}
+
+function hasData(data) { return data.some(d => d.value !== 0); }
+
+// ─── Bar panels ───────────────────────────────────────────────────────────────
+
+function renderBarPanels() {
+  const p = state.barPeriod;
+  const ampm   = getAMPMData(p);
+  const slot4  = get4SlotData(p);
+  const hourly = getHourlyData(p);
+
+  setPanel('bar-p0', hasData(ampm)   ? buildBarSVG(ampm)                       : null);
+  setPanel('bar-p1', hasData(slot4)  ? buildBarSVG(slot4)                      : null);
+  setPanel('bar-p2', hasData(hourly) ? buildBarSVG(hourly, { noYLabels: true }) : null);
+}
+
+// ─── Emotion panels ───────────────────────────────────────────────────────────
+
+function renderEmoPanels() {
+  const pieData   = getPieData();
+  const countData = getEmotionCountData();
+  const rpData    = getEmotionRPData();
+
+  setPanel('emo-p0', pieData.length   ? buildPieSVG(pieData)                          : null);
+  setPanel('emo-p1', countData.length ? buildBarSVG(countData, { allPositive: true }) : null);
+  setPanel('emo-p2', rpData.length    ? buildBarSVG(rpData)                           : null);
+}
+
+// ─── H-scroll setup ───────────────────────────────────────────────────────────
+
+function setupHScroll({ trackId, leftId, rightId, labelId, labels, initPanel = 0 }) {
+  const track = document.getElementById(trackId);
+  const left  = document.getElementById(leftId);
+  const right = document.getElementById(rightId);
+  const label = document.getElementById(labelId);
+  const n = labels.length;
+
+  function update() {
+    const w = track.offsetWidth;
+    if (!w) return;
+    const idx = Math.max(0, Math.min(n - 1, Math.round(track.scrollLeft / w)));
+    label.textContent = labels[idx];
+    left.classList.toggle('dim', idx === 0);
+    right.classList.toggle('dim', idx === n - 1);
+  }
+
+  track.addEventListener('scroll', update, { passive: true });
+
+  left.addEventListener('click', () => track.scrollBy({ left: -track.offsetWidth, behavior: 'smooth' }));
+  right.addEventListener('click', () => track.scrollBy({ left: track.offsetWidth, behavior: 'smooth' }));
+
+  // Two rAF to ensure layout is complete before setting scroll
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    track.scrollLeft = initPanel * track.offsetWidth;
+    update();
+  }));
 }
 
 // ─── Router ───────────────────────────────────────────────────────────────────
@@ -482,13 +549,13 @@ function renderPieChart() {
 function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.add('hidden'));
   document.getElementById(`view-${name}`).classList.remove('hidden');
-  document.querySelectorAll('.nav-btn').forEach(btn => {
+  document.querySelectorAll('#nav .nav-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.view === name);
   });
 
   if (name === 'rec')   updateRecDate();
   if (name === 'hist')  renderHist();
-  if (name === 'graph') { renderBarChart(); renderPieChart(); }
+  if (name === 'graph') { renderBarPanels(); renderEmoPanels(); }
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
@@ -510,7 +577,6 @@ function init() {
 
   document.getElementById('btn-save').addEventListener('click', saveEntry);
 
-  // History filter
   document.querySelectorAll('.filter-row .seg-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.filter-row .seg-btn').forEach(b => b.classList.remove('active'));
@@ -520,23 +586,35 @@ function init() {
     });
   });
 
-  // Bar chart period
   document.querySelectorAll('.period-row .seg-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.period-row .seg-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       state.barPeriod = btn.dataset.period;
-      renderBarChart();
+      renderBarPanels();
     });
   });
 
-  // Clear all
   document.getElementById('clear-btn').addEventListener('click', () => {
     if (!confirm('全ての記録を削除しますか？')) return;
     state.logs = [];
     saveLogs();
     renderHist();
     toast('DELETED');
+  });
+
+  // H-scroll: bar chart defaults to middle panel (4-slot)
+  setupHScroll({
+    trackId: 'bar-track', leftId: 'bar-left', rightId: 'bar-right', labelId: 'bar-label',
+    labels: ['午前/午後', '朝昼夜深夜', '1時間ごと'],
+    initPanel: 1,
+  });
+
+  // H-scroll: emotion chart defaults to first panel (pie)
+  setupHScroll({
+    trackId: 'emo-track', leftId: 'emo-left', rightId: 'emo-right', labelId: 'emo-label',
+    labels: ['感情分布', '回数', '平均RP'],
+    initPanel: 0,
   });
 
   showView('rec');
