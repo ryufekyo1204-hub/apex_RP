@@ -1,0 +1,11 @@
+{
+  "name": "APEX 人格ログ",
+  "short_name": "人格ログ",
+  "description": "Apexランク中の自分の人格・感情を可視化するツール",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0e0e16",
+  "theme_color": "#0e0e16",
+  "lang": "ja"
+}
