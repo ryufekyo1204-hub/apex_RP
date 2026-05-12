@@ -652,31 +652,33 @@ function showRPSection(name) {
 function renderPartyAnalysis() {
   const el = document.getElementById('party-analysis-section');
   if (!el) return;
+
   const parties = [
     { key: 'solo', label: 'SOLO' },
     { key: 'duo',  label: 'DUO'  },
     { key: 'full', label: 'FULL' },
   ];
-  const rows = parties.map(({ key, label }) => {
-    const logs = state.logs.filter(l => l.party === key);
-    if (logs.length === 0) return null;
-    const avgRP   = Math.round(logs.reduce((s, l) => s + l.rp, 0) / logs.length);
-    const winRate = Math.round((logs.filter(l => l.rp > 0).length / logs.length) * 100);
-    const avgKill = (logs.reduce((s, l) => s + l.kills, 0) / logs.length).toFixed(1);
-    return { label, count: logs.length, avgRP, winRate, avgKill };
-  }).filter(Boolean);
-
-  if (rows.length === 0) { el.innerHTML = ''; return; }
 
   el.innerHTML = `<div class="graph-title" style="margin-bottom:10px">パーティ別</div>` +
-    rows.map(r => `
-      <div class="party-row">
-        <span class="party-label">${r.label}</span>
-        <span class="party-stat">${r.count}試合</span>
-        <span class="party-stat ${rpCls(r.avgRP)}">${fmtRP(r.avgRP)} avg</span>
-        <span class="party-stat">K ${r.avgKill}</span>
-        <span class="party-stat">勝率 ${r.winRate}%</span>
-      </div>`).join('');
+    parties.map(({ key, label }) => {
+      const logs = state.logs.filter(l => l.party === key);
+      if (logs.length === 0) {
+        return `<div class="party-row">
+          <span class="party-label">${label}</span>
+          <span class="party-stat">—</span>
+        </div>`;
+      }
+      const avgRP   = Math.round(logs.reduce((s, l) => s + l.rp, 0) / logs.length);
+      const winRate = Math.round((logs.filter(l => l.rp > 0).length / logs.length) * 100);
+      const avgKill = (logs.reduce((s, l) => s + l.kills, 0) / logs.length).toFixed(1);
+      return `<div class="party-row">
+        <span class="party-label">${label}</span>
+        <span class="party-stat">${logs.length}試合</span>
+        <span class="party-stat ${rpCls(avgRP)}">${fmtRP(avgRP)} avg</span>
+        <span class="party-stat">K ${avgKill}</span>
+        <span class="party-stat">勝率 ${winRate}%</span>
+      </div>`;
+    }).join('');
 }
 
 function renderPersonalityTendency() {
@@ -684,74 +686,81 @@ function renderPersonalityTendency() {
   if (!el) return;
   const today = todayStr();
   const logs  = state.logs.filter(l => l.date === today);
-  if (logs.length < 2) { el.innerHTML = ''; return; }
+
+  if (logs.length === 0) {
+    el.innerHTML = `<div class="graph-title" style="margin-bottom:6px">本日の人格</div>
+      <div class="trait-row"><span class="trait-detail" style="color:var(--muted)">記録がありません</span></div>`;
+    return;
+  }
 
   const n = logs.length;
   const traits = [];
 
-  // Emotion patterns
-  const emoCount = id => logs.filter(l => l.emotions.includes(id)).length;
-  const angryRate     = emoCount('angry')      / n;
-  const aggressiveRate= emoCount('aggressive') / n;
-  const tiredRate     = emoCount('tired')      / n;
-  const calmRate      = emoCount('calm')       / n;
-  const hotRate       = emoCount('hot')        / n;
-  const inertiaRate   = emoCount('inertia')    / n;
+  const emoRate = id => logs.filter(l => l.emotions.includes(id)).length / n;
+  const allyRate = id => logs.filter(l => l.ally.includes(id)).length / n;
+  const playRate = id => logs.filter(l => l.play.includes(id)).length / n;
 
-  if (angryRate >= 0.4)
-    traits.push({ label: '焦燥感あり', detail: `イライラ入力: ${Math.round(angryRate*100)}%` });
-  else if (calmRate >= 0.5)
-    traits.push({ label: '冷静さ維持', detail: `冷静入力: ${Math.round(calmRate*100)}%` });
+  // Emotion — lowest threshold so it always fires with 1 log
+  const angry      = emoRate('angry');
+  const calm       = emoRate('calm');
+  const hot        = emoRate('hot');
+  const tired      = emoRate('tired');
+  const inertia    = emoRate('inertia');
+  const aggressive = emoRate('aggressive');
 
-  if (hotRate >= 0.4)
-    traits.push({ label: 'ノリが良い日', detail: `ノッてる入力: ${Math.round(hotRate*100)}%` });
+  if (angry > 0)
+    traits.push({ label: '焦燥感あり', detail: `イライラ入力: ${Math.round(angry*100)}%` });
+  else if (calm >= 0.5)
+    traits.push({ label: '冷静さ維持', detail: `冷静入力: ${Math.round(calm*100)}%` });
 
-  if (tiredRate >= 0.4)
-    traits.push({ label: '疲労感あり', detail: `疲れてる入力: ${Math.round(tiredRate*100)}%` });
+  if (hot > 0)
+    traits.push({ label: 'ノリが良い', detail: `ノッてる入力: ${Math.round(hot*100)}%` });
 
-  if (inertiaRate >= 0.4)
-    traits.push({ label: '惰性プレイ傾向', detail: `惰性入力: ${Math.round(inertiaRate*100)}%` });
+  if (tired > 0)
+    traits.push({ label: '疲労感あり', detail: `疲れてる入力: ${Math.round(tired*100)}%` });
 
-  // Ally tags — user-friendly framing (never blame)
-  const weakAllyRate = logs.filter(l => l.ally.includes('weak') || l.ally.includes('toxic')).length / n;
-  const strongAllyRate = logs.filter(l => l.ally.includes('strong') || l.ally.includes('synergy')).length / n;
-  if (weakAllyRate >= 0.4) {
-    const avgRPWeak = Math.round(
-      logs.filter(l => l.ally.includes('weak') || l.ally.includes('toxic'))
-          .reduce((s, l) => s + l.rp, 0) /
-      Math.max(1, logs.filter(l => l.ally.includes('weak') || l.ally.includes('toxic')).length)
-    );
-    traits.push({ label: '味方依存度 高め', detail: `弱い味方入力時の平均RP: ${fmtRP(avgRPWeak)}` });
-  } else if (strongAllyRate >= 0.4) {
-    traits.push({ label: '味方との連携良好', detail: `噛み合い・強い入力: ${Math.round(strongAllyRate*100)}%` });
+  if (inertia > 0)
+    traits.push({ label: '惰性プレイ傾向', detail: `惰性入力: ${Math.round(inertia*100)}%` });
+
+  // Ally — user-friendly framing
+  const weakAllyLogs   = logs.filter(l => l.ally.includes('weak') || l.ally.includes('toxic'));
+  const strongAllyLogs = logs.filter(l => l.ally.includes('strong') || l.ally.includes('synergy'));
+  if (weakAllyLogs.length > 0) {
+    const avgRPWeak = Math.round(weakAllyLogs.reduce((s, l) => s + l.rp, 0) / weakAllyLogs.length);
+    traits.push({ label: '味方弱い入力あり', detail: `その時の平均RP: ${fmtRP(avgRPWeak)}` });
+  }
+  if (strongAllyLogs.length > 0) {
+    const avgRPStrong = Math.round(strongAllyLogs.reduce((s, l) => s + l.rp, 0) / strongAllyLogs.length);
+    traits.push({ label: '味方強い入力あり', detail: `その時の平均RP: ${fmtRP(avgRPStrong)}` });
   }
 
-  // Solo plays
-  const aggroRate  = logs.filter(l => l.play.includes('aggro')).length / n;
-  const passiveRate= logs.filter(l => l.play.includes('passive')).length / n;
-  if (aggroRate >= 0.4)
-    traits.push({ label: '単独行動増加', detail: `突っ込み入力: ${Math.round(aggroRate*100)}%` });
-  else if (passiveRate >= 0.4)
-    traits.push({ label: '慎重プレイ傾向', detail: `慎重入力: ${Math.round(passiveRate*100)}%` });
+  // Play style
+  if (playRate('aggro') > 0)
+    traits.push({ label: '単独行動傾向', detail: `突っ込み入力: ${Math.round(playRate('aggro')*100)}%` });
+  if (playRate('passive') > 0)
+    traits.push({ label: '慎重プレイ傾向', detail: `慎重入力: ${Math.round(playRate('passive')*100)}%` });
 
-  // RP trend in session
-  const firstHalf  = logs.slice(0, Math.floor(n/2));
-  const secondHalf = logs.slice(Math.floor(n/2));
-  if (firstHalf.length && secondHalf.length) {
-    const avgFirst  = firstHalf.reduce((s, l) => s + l.rp, 0) / firstHalf.length;
-    const avgSecond = secondHalf.reduce((s, l) => s + l.rp, 0) / secondHalf.length;
-    if (avgFirst - avgSecond > 15)
-      traits.push({ label: '後半に失速', detail: `前半 ${fmtRP(Math.round(avgFirst))} → 後半 ${fmtRP(Math.round(avgSecond))} avg` });
-    else if (avgSecond - avgFirst > 15)
-      traits.push({ label: '後半に調子上がる', detail: `前半 ${fmtRP(Math.round(avgFirst))} → 後半 ${fmtRP(Math.round(avgSecond))} avg` });
+  // Session trend (need 2+ logs)
+  if (n >= 2) {
+    const half      = Math.ceil(n / 2);
+    const avgFirst  = logs.slice(0, half).reduce((s, l) => s + l.rp, 0) / half;
+    const avgSecond = logs.slice(half).reduce((s, l) => s + l.rp, 0) / (n - half);
+    const diff = avgSecond - avgFirst;
+    if (diff > 15)
+      traits.push({ label: '後半に調子上がる', detail: `前半 ${fmtRP(Math.round(avgFirst))} → 後半 ${fmtRP(Math.round(avgSecond))}` });
+    else if (diff < -15)
+      traits.push({ label: '後半に失速', detail: `前半 ${fmtRP(Math.round(avgFirst))} → 後半 ${fmtRP(Math.round(avgSecond))}` });
   }
+
+  const header = `<div class="graph-title" style="margin-bottom:10px">本日の人格 <span style="font-weight:400;letter-spacing:0">(${n}試合)</span></div>`;
 
   if (traits.length === 0) {
-    el.innerHTML = '';
+    el.innerHTML = header +
+      `<div class="trait-row"><span class="trait-detail">タグを入力すると傾向が表示されます</span></div>`;
     return;
   }
 
-  el.innerHTML = `<div class="graph-title" style="margin-bottom:10px">本日の人格</div>` +
+  el.innerHTML = header +
     traits.map(t => `
       <div class="trait-row">
         <span class="trait-label">・${t.label}</span>

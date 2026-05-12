@@ -453,10 +453,30 @@ html, body {
 .hidden { display: none !important; }
 .bottom-pad { height: 32px; }
 
-/* ─── GRAPH view: no vertical scroll ────────── */
+/* ─── GRAPH view: flex layout, no scroll ────── */
 #view-graph .view-scroll {
-  overflow-y: hidden;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
+
+#view-graph .graph-section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#view-graph .chart-header { flex-shrink: 0; }
+#view-graph .period-row   { flex-shrink: 0; }
+#view-graph .h-scroll-track { flex: 1; min-height: 0; }
+
+/* ─── SVG touch-action ───────────────────────── */
+/* Allow vertical scroll through SVGs in scroll containers */
+.view-scroll svg { touch-action: pan-y; }
+/* Allow horizontal swipe through SVGs in h-scroll panels */
+.h-scroll-panel svg { touch-action: pan-x; }
 
 /* ─── Party analysis rows ────────────────────── */
 .party-row {
