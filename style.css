@@ -452,3 +452,340 @@ html, body {
 /* ─── Misc ───────────────────────────────────── */
 .hidden { display: none !important; }
 .bottom-pad { height: 32px; }
+
+/* ─── Rank banner ────────────────────────────── */
+.rank-banner {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.rank-banner-inner {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.rank-icon {
+  font-size: 1.1rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.rank-name {
+  font-size: 1rem;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+}
+
+.rank-lp {
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+  margin-left: auto;
+}
+
+.rank-next {
+  font-size: 0.68rem;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+}
+
+.rank-progress-bar {
+  height: 3px;
+  background: #d4d0c8;
+  width: 100%;
+}
+
+.rank-progress-fill {
+  height: 100%;
+  background: var(--fg);
+  transition: width 0.3s;
+}
+
+/* ─── RP section tabs ────────────────────────── */
+.rp-section-tabs {
+  flex-shrink: 0;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+}
+
+/* ─── Analysis card ──────────────────────────── */
+.analysis-card {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.analysis-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.analysis-status {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.analysis-sub {
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
+.analysis-emo {
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-top: 4px;
+  letter-spacing: 0.04em;
+}
+
+/* ─── Tag grid 2-row ─────────────────────────── */
+.tag-grid-2row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border: 1px solid var(--border);
+}
+
+.tag-grid-2row .tag-btn {
+  padding: 10px 4px;
+  background: transparent;
+  border: none;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--fg);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.08s, color 0.08s;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+.tag-grid-2row .tag-btn:nth-child(4n) { border-right: none; }
+.tag-grid-2row .tag-btn:nth-last-child(-n+4) { border-bottom: none; }
+
+.tag-grid-2row .tag-btn.active {
+  background: var(--fg);
+  color: var(--bg);
+}
+
+/* ─── Character select ───────────────────────── */
+.char-select {
+  width: 100%;
+  padding: 12px 10px;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231a1714' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+}
+
+/* ─── Short log cards ────────────────────────── */
+.short-log-card {
+  padding: 14px 0 6px;
+}
+
+.short-log-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.short-stat-row {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border);
+}
+
+.short-stat {
+  flex: 1;
+  padding: 10px 6px;
+  text-align: center;
+  border-right: 1px solid var(--border);
+}
+
+.short-stat:last-child { border-right: none; }
+
+.short-stat-val {
+  font-size: 1rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.short-stat-val.pos { color: var(--pos); }
+.short-stat-val.neg { color: var(--neg); }
+
+.short-stat-lbl {
+  font-size: 0.58rem;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+}
+
+/* ─── Chara items ────────────────────────────── */
+.chara-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.chara-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  letter-spacing: 0.04em;
+}
+
+.chara-stats {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.chara-stat {
+  font-size: 0.7rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+.chara-stat.pos { color: var(--pos); }
+.chara-stat.neg { color: var(--neg); }
+
+/* ─── BR stats row ───────────────────────────── */
+.br-stats-row {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+
+.br-stat {
+  flex: 1;
+  padding: 16px 8px;
+  text-align: center;
+  border-right: 1px solid var(--border);
+}
+
+.br-stat:last-child { border-right: none; }
+
+.br-stat-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.br-stat-val {
+  font-size: 1.4rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* ─── Entry delete button ────────────────────── */
+.entry-del-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  align-self: center;
+  transition: color 0.1s;
+  flex-shrink: 0;
+}
+
+.entry-del-btn:active { color: var(--neg); }
+
+/* ─── Mini chip death ────────────────────────── */
+.mini-chip.death {
+  border-color: var(--neg);
+  color: var(--neg);
+}
+
+/* ─── Modal ──────────────────────────────────── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 23, 20, 0.55);
+  z-index: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modal-box {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 20px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.modal-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  margin-bottom: 16px;
+}
+
+.modal-field {
+  margin-bottom: 14px;
+}
+
+.modal-label {
+  display: block;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.modal-select,
+.modal-input {
+  width: 100%;
+  padding: 10px;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+  font-weight: 600;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.modal-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231a1714' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+/* ─── Chart popup ────────────────────────────── */
+.chart-popup {
+  position: fixed;
+  background: var(--fg);
+  color: var(--bg);
+  padding: 7px 14px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  z-index: 700;
+  pointer-events: none;
+  white-space: nowrap;
+  border: 1px solid var(--fg);
+}

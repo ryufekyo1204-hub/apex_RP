@@ -49,18 +49,33 @@
         </div>
 
         <div class="field">
+          <div class="field-label">キャラクター</div>
+          <div id="char-select-wrap"></div>
+        </div>
+
+        <div class="field">
           <div class="field-label">感情 <span class="sub-hint">複数可</span></div>
-          <div class="tag-wrap" id="emotion-tags"></div>
+          <div id="emotion-tags"></div>
         </div>
 
         <div class="field">
           <div class="field-label">味方 <span class="sub-hint">複数可</span></div>
-          <div class="tag-wrap" id="ally-tags"></div>
+          <div id="ally-tags"></div>
         </div>
 
         <div class="field">
           <div class="field-label">動き <span class="sub-hint">複数可</span></div>
-          <div class="tag-wrap" id="play-tags"></div>
+          <div id="play-tags"></div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">死因</div>
+          <div class="seg-row" id="death-cause-row">
+            <button class="seg-btn" data-cause="isolated">孤立</button>
+            <button class="seg-btn" data-cause="outgunned">力負け</button>
+            <button class="seg-btn" data-cause="thirded">漁夫</button>
+            <button class="seg-btn" data-cause="mistake">戦略ミス</button>
+          </div>
         </div>
 
         <button class="submit-btn" id="btn-save">記録する</button>
@@ -68,20 +83,139 @@
       </div>
     </div>
 
-    <!-- ===== HIST ===== -->
-    <div class="view hidden" id="view-hist">
+    <!-- ===== RP LOG ===== -->
+    <div class="view hidden" id="view-rp">
       <header class="app-header">
-        <span class="h-title">LOG</span>
-        <button class="h-btn danger" id="clear-btn">全削除</button>
+        <span class="h-title">RP LOG</span>
+        <button class="h-btn" id="rank-edit-btn">編集</button>
+      </header>
+
+      <!-- Rank Banner -->
+      <div id="rank-banner" class="rank-banner">
+        <div class="rank-banner-inner">
+          <span class="rank-icon" id="rank-icon">◆</span>
+          <span class="rank-name" id="rank-name">Bronze I</span>
+          <span class="rank-lp" id="rank-lp">1000 LP</span>
+          <span class="rank-next" id="rank-next">→次: 250 LP</span>
+        </div>
+        <div class="rank-progress-bar">
+          <div class="rank-progress-fill" id="rank-progress-fill"></div>
+        </div>
+      </div>
+
+      <!-- Section tabs -->
+      <div class="seg-row rp-section-tabs" id="rp-section-tabs">
+        <button class="seg-btn active" data-rpsection="log">ログ</button>
+        <button class="seg-btn" data-rpsection="analysis">分析</button>
+        <button class="seg-btn" data-rpsection="chara">キャラ</button>
+      </div>
+
+      <div class="view-scroll" id="rp-scroll">
+
+        <!-- LOG SECTION -->
+        <div id="rp-log-section">
+          <div id="analysis-card" class="analysis-card"></div>
+          <div class="seg-row filter-row" id="rp-filter-row">
+            <button class="seg-btn active" data-filter="today">今日</button>
+            <button class="seg-btn" data-filter="week">今週</button>
+            <button class="seg-btn" data-filter="all">全て</button>
+          </div>
+          <div id="rp-hist-list"></div>
+          <div id="rp-hist-empty" class="empty hidden">記録がありません</div>
+        </div>
+
+        <!-- ANALYSIS SECTION -->
+        <div id="rp-analysis-section" class="hidden">
+
+          <!-- Short log h-scroll -->
+          <div class="graph-section">
+            <div class="chart-header">
+              <span class="graph-title">SHORT LOG</span>
+              <div class="chart-page-ctrl">
+                <button class="chart-pg-btn" id="short-left">◀</button>
+                <span class="chart-pg-label" id="short-label">過去1h</span>
+                <button class="chart-pg-btn" id="short-right">▶</button>
+              </div>
+            </div>
+            <div class="h-scroll-track" id="short-track">
+              <div class="h-scroll-panel" id="short-p0"></div>
+              <div class="h-scroll-panel" id="short-p1"></div>
+              <div class="h-scroll-panel" id="short-p2"></div>
+            </div>
+          </div>
+
+          <!-- Long log h-scroll -->
+          <div class="graph-section">
+            <div class="chart-header">
+              <span class="graph-title">LONG LOG</span>
+              <div class="chart-page-ctrl">
+                <button class="chart-pg-btn" id="long-left">◀</button>
+                <span class="chart-pg-label" id="long-label">今月</span>
+                <button class="chart-pg-btn" id="long-right">▶</button>
+              </div>
+            </div>
+            <div class="h-scroll-track" id="long-track">
+              <div class="h-scroll-panel" id="long-p0"></div>
+              <div class="h-scroll-panel" id="long-p1"></div>
+              <div class="h-scroll-panel" id="long-p2"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- CHARA SECTION -->
+        <div id="rp-chara-section" class="hidden">
+          <div id="chara-list"></div>
+          <div id="chara-empty" class="empty hidden">キャラデータなし</div>
+        </div>
+
+        <div class="bottom-pad"></div>
+      </div>
+    </div>
+
+    <!-- ===== BR LOG ===== -->
+    <div class="view hidden" id="view-br">
+      <header class="app-header">
+        <span class="h-title">BR LOG</span>
       </header>
       <div class="view-scroll">
-        <div class="seg-row filter-row">
-          <button class="seg-btn active" data-filter="today">今日</button>
-          <button class="seg-btn" data-filter="week">今週</button>
-          <button class="seg-btn" data-filter="all">全て</button>
+
+        <!-- Overview stats -->
+        <div class="br-stats-row">
+          <div class="br-stat">
+            <div class="br-stat-label">平均キル</div>
+            <div class="br-stat-val" id="br-avg-kill">0.0</div>
+          </div>
+          <div class="br-stat">
+            <div class="br-stat-label">最多キル</div>
+            <div class="br-stat-val" id="br-max-kill">0</div>
+          </div>
+          <div class="br-stat">
+            <div class="br-stat-label">総試合</div>
+            <div class="br-stat-val" id="br-total">0</div>
+          </div>
         </div>
-        <div id="hist-list"></div>
-        <div id="hist-empty" class="empty hidden">記録がありません</div>
+
+        <div class="graph-section">
+          <div class="graph-title" style="margin-bottom:12px">キル数分布</div>
+          <div id="br-kill-chart"></div>
+        </div>
+
+        <div class="graph-section">
+          <div class="graph-title" style="margin-bottom:12px">死因分布</div>
+          <div id="br-death-chart"></div>
+        </div>
+
+        <div class="graph-section">
+          <div class="graph-title" style="margin-bottom:12px">キャラ別 平均キル</div>
+          <div id="br-chara-kill-chart"></div>
+        </div>
+
+        <div class="graph-section">
+          <div class="graph-title" style="margin-bottom:12px">キャラ別 平均RP</div>
+          <div id="br-chara-rp-chart"></div>
+        </div>
+
         <div class="bottom-pad"></div>
       </div>
     </div>
@@ -138,11 +272,31 @@
 
   <nav id="nav">
     <button class="nav-btn active" data-view="rec">REC</button>
-    <button class="nav-btn" data-view="hist">LOG</button>
+    <button class="nav-btn" data-view="rp">RP</button>
+    <button class="nav-btn" data-view="br">BR</button>
     <button class="nav-btn" data-view="graph">GRAPH</button>
   </nav>
 
   <div id="toast" class="toast"></div>
+
+  <!-- Rank setup modal -->
+  <div id="rank-modal-overlay" class="modal-overlay hidden">
+    <div class="modal-box">
+      <div class="modal-title">ランク設定</div>
+      <div class="modal-field">
+        <label class="modal-label">ランク</label>
+        <select id="rank-select" class="modal-select"></select>
+      </div>
+      <div class="modal-field">
+        <label class="modal-label">LP (ティア内)</label>
+        <input type="number" id="rank-lp-input" class="modal-input" min="0" max="999" value="0" inputmode="numeric">
+      </div>
+      <button id="rank-save-btn" class="submit-btn" style="margin:16px 0 0;">設定する</button>
+    </div>
+  </div>
+
+  <!-- Bar chart popup -->
+  <div id="chart-popup" class="chart-popup hidden"></div>
 
   <script src="app.js"></script>
 </body>
