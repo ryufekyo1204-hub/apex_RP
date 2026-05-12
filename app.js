@@ -649,6 +649,116 @@ function showRPSection(name) {
   if (name === 'chara')    renderCharaSection();
 }
 
+function renderPartyAnalysis() {
+  const el = document.getElementById('party-analysis-section');
+  if (!el) return;
+  const parties = [
+    { key: 'solo', label: 'SOLO' },
+    { key: 'duo',  label: 'DUO'  },
+    { key: 'full', label: 'FULL' },
+  ];
+  const rows = parties.map(({ key, label }) => {
+    const logs = state.logs.filter(l => l.party === key);
+    if (logs.length === 0) return null;
+    const avgRP   = Math.round(logs.reduce((s, l) => s + l.rp, 0) / logs.length);
+    const winRate = Math.round((logs.filter(l => l.rp > 0).length / logs.length) * 100);
+    const avgKill = (logs.reduce((s, l) => s + l.kills, 0) / logs.length).toFixed(1);
+    return { label, count: logs.length, avgRP, winRate, avgKill };
+  }).filter(Boolean);
+
+  if (rows.length === 0) { el.innerHTML = ''; return; }
+
+  el.innerHTML = `<div class="graph-title" style="margin-bottom:10px">パーティ別</div>` +
+    rows.map(r => `
+      <div class="party-row">
+        <span class="party-label">${r.label}</span>
+        <span class="party-stat">${r.count}試合</span>
+        <span class="party-stat ${rpCls(r.avgRP)}">${fmtRP(r.avgRP)} avg</span>
+        <span class="party-stat">K ${r.avgKill}</span>
+        <span class="party-stat">勝率 ${r.winRate}%</span>
+      </div>`).join('');
+}
+
+function renderPersonalityTendency() {
+  const el = document.getElementById('personality-section');
+  if (!el) return;
+  const today = todayStr();
+  const logs  = state.logs.filter(l => l.date === today);
+  if (logs.length < 2) { el.innerHTML = ''; return; }
+
+  const n = logs.length;
+  const traits = [];
+
+  // Emotion patterns
+  const emoCount = id => logs.filter(l => l.emotions.includes(id)).length;
+  const angryRate     = emoCount('angry')      / n;
+  const aggressiveRate= emoCount('aggressive') / n;
+  const tiredRate     = emoCount('tired')      / n;
+  const calmRate      = emoCount('calm')       / n;
+  const hotRate       = emoCount('hot')        / n;
+  const inertiaRate   = emoCount('inertia')    / n;
+
+  if (angryRate >= 0.4)
+    traits.push({ label: '焦燥感あり', detail: `イライラ入力: ${Math.round(angryRate*100)}%` });
+  else if (calmRate >= 0.5)
+    traits.push({ label: '冷静さ維持', detail: `冷静入力: ${Math.round(calmRate*100)}%` });
+
+  if (hotRate >= 0.4)
+    traits.push({ label: 'ノリが良い日', detail: `ノッてる入力: ${Math.round(hotRate*100)}%` });
+
+  if (tiredRate >= 0.4)
+    traits.push({ label: '疲労感あり', detail: `疲れてる入力: ${Math.round(tiredRate*100)}%` });
+
+  if (inertiaRate >= 0.4)
+    traits.push({ label: '惰性プレイ傾向', detail: `惰性入力: ${Math.round(inertiaRate*100)}%` });
+
+  // Ally tags — user-friendly framing (never blame)
+  const weakAllyRate = logs.filter(l => l.ally.includes('weak') || l.ally.includes('toxic')).length / n;
+  const strongAllyRate = logs.filter(l => l.ally.includes('strong') || l.ally.includes('synergy')).length / n;
+  if (weakAllyRate >= 0.4) {
+    const avgRPWeak = Math.round(
+      logs.filter(l => l.ally.includes('weak') || l.ally.includes('toxic'))
+          .reduce((s, l) => s + l.rp, 0) /
+      Math.max(1, logs.filter(l => l.ally.includes('weak') || l.ally.includes('toxic')).length)
+    );
+    traits.push({ label: '味方依存度 高め', detail: `弱い味方入力時の平均RP: ${fmtRP(avgRPWeak)}` });
+  } else if (strongAllyRate >= 0.4) {
+    traits.push({ label: '味方との連携良好', detail: `噛み合い・強い入力: ${Math.round(strongAllyRate*100)}%` });
+  }
+
+  // Solo plays
+  const aggroRate  = logs.filter(l => l.play.includes('aggro')).length / n;
+  const passiveRate= logs.filter(l => l.play.includes('passive')).length / n;
+  if (aggroRate >= 0.4)
+    traits.push({ label: '単独行動増加', detail: `突っ込み入力: ${Math.round(aggroRate*100)}%` });
+  else if (passiveRate >= 0.4)
+    traits.push({ label: '慎重プレイ傾向', detail: `慎重入力: ${Math.round(passiveRate*100)}%` });
+
+  // RP trend in session
+  const firstHalf  = logs.slice(0, Math.floor(n/2));
+  const secondHalf = logs.slice(Math.floor(n/2));
+  if (firstHalf.length && secondHalf.length) {
+    const avgFirst  = firstHalf.reduce((s, l) => s + l.rp, 0) / firstHalf.length;
+    const avgSecond = secondHalf.reduce((s, l) => s + l.rp, 0) / secondHalf.length;
+    if (avgFirst - avgSecond > 15)
+      traits.push({ label: '後半に失速', detail: `前半 ${fmtRP(Math.round(avgFirst))} → 後半 ${fmtRP(Math.round(avgSecond))} avg` });
+    else if (avgSecond - avgFirst > 15)
+      traits.push({ label: '後半に調子上がる', detail: `前半 ${fmtRP(Math.round(avgFirst))} → 後半 ${fmtRP(Math.round(avgSecond))} avg` });
+  }
+
+  if (traits.length === 0) {
+    el.innerHTML = '';
+    return;
+  }
+
+  el.innerHTML = `<div class="graph-title" style="margin-bottom:10px">本日の人格</div>` +
+    traits.map(t => `
+      <div class="trait-row">
+        <span class="trait-label">・${t.label}</span>
+        <span class="trait-detail">${t.detail}</span>
+      </div>`).join('');
+}
+
 function renderAnalysisSection() {
   renderShortPanel('short-p0', 1,  '過去1時間');
   renderShortPanel('short-p1', 3,  '過去3時間');
@@ -656,6 +766,8 @@ function renderAnalysisSection() {
   renderLongPanel('long-p0', 'month');
   renderLongPanel('long-p1', 'prev');
   renderLongPanel('long-p2', 'all');
+  renderPartyAnalysis();
+  renderPersonalityTendency();
 }
 
 // ─── RP LOG render ────────────────────────────────────────────────────────────
@@ -836,7 +948,7 @@ function buildBarSVG(data, { noYLabels = false, allPositive = false, onBarClick 
   const zeroY  = allPositive ? H - PB : PT + CH / 2;
   const halfH  = allPositive ? CH : CH / 2;
 
-  const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, style: 'touch-action:none' });
+  const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}` });
 
   if (!noYLabels) {
     svg.appendChild(svgEl('line', { x1: PL, y1: PT, x2: PL, y2: H-PB, stroke: '#1a1714', 'stroke-width': 1 }));
@@ -961,25 +1073,22 @@ function setPanel(id, svgOrNull) {
 
 function hasData(data) { return data.some(d => d.value !== 0); }
 
-// ─── Bar panels (order: hourly=p0, 4-slot=p1 default, ampm=p2) ───────────────
+// ─── Bar panels (order: hourly=p0 default=p1(4-slot)) ────────────────────────
 
 function renderBarPanels() {
   const p = state.barPeriod;
   const hourly = getHourlyData(p);
   const slot4  = get4SlotData(p);
-  const ampm   = getAMPMData(p);
 
   const hourlyClick = (d, e) => {
     if (d.value === 0 && d.count === 0) return;
     const h = parseInt(d.label, 10);
     const text = `${pad(h)}:00-${pad(h+1)}:00 · RP: ${fmtRP(d.value)} (${d.count}試合)`;
-    const rect = e.target ? e.target.getBoundingClientRect() : { left: e.clientX, top: e.clientY };
-    showBarPopup(text, e.clientX || rect.left, e.clientY || rect.top);
+    showBarPopup(text, e.clientX, e.clientY);
   };
 
   setPanel('bar-p0', hasData(hourly) ? buildBarSVG(hourly, { noYLabels: true, onBarClick: hourlyClick }) : null);
   setPanel('bar-p1', hasData(slot4)  ? buildBarSVG(slot4)                                               : null);
-  setPanel('bar-p2', hasData(ampm)   ? buildBarSVG(ampm)                                                : null);
 }
 
 // ─── Emotion panels ───────────────────────────────────────────────────────────
@@ -988,9 +1097,10 @@ function renderEmoPanels() {
   const pieData   = getPieData();
   const countData = getEmotionCountData();
   const rpData    = getEmotionRPData();
+  // order: 感情分布(pie) → 回数 → 平均RP
   setPanel('emo-p0', pieData.length   ? buildPieSVG(pieData)                          : null);
-  setPanel('emo-p1', countData.length ? buildBarSVG(countData, { allPositive: true }) : null);
-  setPanel('emo-p2', rpData.length    ? buildBarSVG(rpData)                           : null);
+  setPanel('emo-p1', rpData.length    ? buildBarSVG(rpData)                           : null);
+  setPanel('emo-p2', countData.length ? buildBarSVG(countData, { allPositive: true }) : null);
 }
 
 // ─── H-scroll setup ───────────────────────────────────────────────────────────
@@ -1116,15 +1226,16 @@ function init() {
   });
 
   // H-scroll setups
-  // bar: hourly=p0, 4-slot=p1(default), ampm=p2
+  // bar: hourly=p0, 4-slot=p1(default)
   setupHScroll({
     trackId: 'bar-track', leftId: 'bar-left', rightId: 'bar-right', labelId: 'bar-label',
-    labels: ['1時間ごと', '朝昼夜深夜', '午前/午後'],
+    labels: ['1時間ごと', '朝昼夜深夜'],
     initPanel: 1,
   });
+  // emo: 感情分布 → 平均RP → 回数
   setupHScroll({
     trackId: 'emo-track', leftId: 'emo-left', rightId: 'emo-right', labelId: 'emo-label',
-    labels: ['感情分布', '回数', '平均RP'],
+    labels: ['感情分布', '平均RP', '回数'],
     initPanel: 0,
   });
   setupHScroll({
