@@ -399,6 +399,7 @@ html, body {
 .h-scroll-track {
   display: flex;
   overflow-x: auto;
+  overflow-y: hidden;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
@@ -454,6 +455,9 @@ html, body {
 .bottom-pad { height: 32px; }
 
 /* ─── GRAPH view: flex layout, no scroll ────── */
+/* Use flex so both sections share height equally, but don't
+   apply overflow:hidden on sections or h-scroll-track to avoid
+   clipping SVG axis labels at the section boundary */
 #view-graph .view-scroll {
   overflow: hidden;
   display: flex;
@@ -463,20 +467,87 @@ html, body {
 #view-graph .graph-section {
   flex: 1;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
 }
 
-#view-graph .chart-header { flex-shrink: 0; }
-#view-graph .period-row   { flex-shrink: 0; }
-#view-graph .h-scroll-track { flex: 1; min-height: 0; }
-
 /* ─── SVG touch-action ───────────────────────── */
-/* Allow vertical scroll through SVGs in scroll containers */
-.view-scroll svg { touch-action: pan-y; }
-/* Allow horizontal swipe through SVGs in h-scroll panels */
+.view-scroll svg    { touch-action: pan-y; }
 .h-scroll-panel svg { touch-action: pan-x; }
+
+/* ─── Long-term analysis ─────────────────────── */
+.insight-block {
+  margin-bottom: 18px;
+}
+.insight-block:last-child { margin-bottom: 0; }
+
+.insight-subtitle {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--muted);
+  margin-bottom: 8px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--border);
+}
+
+.insight-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(26,23,20,0.08);
+}
+.insight-row:last-child { border-bottom: none; }
+
+.insight-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  min-width: 76px;
+  flex-shrink: 0;
+}
+
+.insight-bar-wrap {
+  flex: 1;
+  height: 3px;
+  background: #dedad2;
+}
+
+.insight-bar {
+  display: block;
+  height: 3px;
+  min-width: 2px;
+}
+
+.insight-rp {
+  font-size: 0.78rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  min-width: 38px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.insight-rp.pos { color: var(--pos); }
+.insight-rp.neg { color: var(--neg); }
+
+.insight-win {
+  font-size: 0.65rem;
+  color: var(--muted);
+  min-width: 32px;
+  flex-shrink: 0;
+}
+
+.insight-n {
+  font-size: 0.62rem;
+  color: var(--muted);
+  min-width: 30px;
+  flex-shrink: 0;
+}
+
+.insight-empty {
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 0.05em;
+  padding: 6px 0;
+}
 
 /* ─── Party analysis rows ────────────────────── */
 .party-row {

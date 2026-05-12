@@ -768,6 +768,59 @@ function renderPersonalityTendency() {
       </div>`).join('');
 }
 
+// ─── Long-term correlation analysis ──────────────────────────────────────────
+
+function renderLongTermAnalysis() {
+  const el = document.getElementById('long-term-analysis-section');
+  if (!el) return;
+
+  const SECTIONS = [
+    { title: '感情と成績',   tags: EMOTION_TAGS, field: 'emotions' },
+    { title: '味方と成績',   tags: ALLY_TAGS,    field: 'ally'     },
+    { title: '動きと成績',   tags: PLAY_TAGS,    field: 'play'     },
+  ];
+
+  el.innerHTML = `<div class="graph-title" style="margin-bottom:14px">長期分析</div>`;
+
+  let anyData = false;
+
+  SECTIONS.forEach(({ title, tags, field }) => {
+    const rows = tags.map(tag => {
+      const logs = state.logs.filter(l => Array.isArray(l[field]) && l[field].includes(tag.id));
+      if (!logs.length) return null;
+      const avgRP   = Math.round(logs.reduce((s, l) => s + l.rp, 0) / logs.length);
+      const winRate = Math.round(logs.filter(l => l.rp > 0).length / logs.length * 100);
+      return { label: tag.label, avgRP, winRate, count: logs.length };
+    }).filter(Boolean).sort((a, b) => b.avgRP - a.avgRP);
+
+    if (!rows.length) return;
+    anyData = true;
+
+    const maxAbs = Math.max(...rows.map(r => Math.abs(r.avgRP)), 1);
+
+    el.innerHTML += `<div class="insight-block">
+      <div class="insight-subtitle">${title}</div>
+      ${rows.map(r => {
+        const barW  = Math.round((Math.abs(r.avgRP) / maxAbs) * 64);
+        const color = r.avgRP >= 0 ? 'var(--pos)' : 'var(--neg)';
+        return `<div class="insight-row">
+          <span class="insight-tag">${r.label}</span>
+          <span class="insight-bar-wrap">
+            <span class="insight-bar" style="width:${barW}px;background:${color}"></span>
+          </span>
+          <span class="insight-rp ${rpCls(r.avgRP)}">${fmtRP(r.avgRP)}</span>
+          <span class="insight-win">${r.winRate}%</span>
+          <span class="insight-n">${r.count}試合</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+  });
+
+  if (!anyData) {
+    el.innerHTML += `<div class="insight-empty">タグを記録すると傾向が分析されます</div>`;
+  }
+}
+
 function renderAnalysisSection() {
   renderShortPanel('short-p0', 1,  '過去1時間');
   renderShortPanel('short-p1', 3,  '過去3時間');
@@ -777,6 +830,7 @@ function renderAnalysisSection() {
   renderLongPanel('long-p2', 'all');
   renderPartyAnalysis();
   renderPersonalityTendency();
+  renderLongTermAnalysis();
 }
 
 // ─── RP LOG render ────────────────────────────────────────────────────────────
