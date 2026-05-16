@@ -466,9 +466,6 @@ html, body {
 .bottom-pad { height: 48px; }
 
 /* ─── GRAPH view: flex layout, no scroll ────── */
-/* Use flex so both sections share height equally, but don't
-   apply overflow:hidden on sections or h-scroll-track to avoid
-   clipping SVG axis labels at the section boundary */
 #view-graph .view-scroll {
   overflow: hidden;
   display: flex;
@@ -478,6 +475,54 @@ html, body {
 #view-graph .graph-section {
   flex: 1;
   min-height: 0;
+  overflow: hidden;
+}
+
+/* ─── RP sections h-scroll ───────────────────── */
+.rp-sections-track {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.rp-sections-track::-webkit-scrollbar { display: none; }
+
+.rp-section-panel {
+  min-width: 100%;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ─── BR chart h-scroll ──────────────────────── */
+.br-chart-track {
+  flex: 1;
+  min-height: 0;
+}
+
+.br-chart-panel {
+  min-width: 100%;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  overflow-y: auto;
+  height: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+.br-page-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 /* ─── SVG touch-action ───────────────────────── */

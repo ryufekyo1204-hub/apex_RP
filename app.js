@@ -638,15 +638,30 @@ function renderCharaSection() {
 
 function showRPSection(name) {
   state.rpSection = name;
-  document.querySelectorAll('#rp-section-tabs .seg-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.rpsection === name);
-  });
-  document.getElementById('rp-log-section').classList.toggle('hidden', name !== 'log');
-  document.getElementById('rp-analysis-section').classList.toggle('hidden', name !== 'analysis');
-  document.getElementById('rp-chara-section').classList.toggle('hidden', name !== 'chara');
+  const track = document.getElementById('rp-sections-track');
+  if (!track) return;
+  const idx = ['log', 'analysis', 'chara'].indexOf(name);
+  if (idx >= 0) track.scrollTo({ left: idx * track.offsetWidth, behavior: 'smooth' });
+}
 
-  if (name === 'analysis') renderAnalysisSection();
-  if (name === 'chara')    renderCharaSection();
+function initRPSections() {
+  const track = document.getElementById('rp-sections-track');
+  const tabs  = document.querySelectorAll('#rp-section-tabs .seg-btn');
+  const names = ['log', 'analysis', 'chara'];
+
+  track.addEventListener('scroll', () => {
+    const w = track.offsetWidth;
+    if (!w) return;
+    const idx = Math.max(0, Math.min(2, Math.round(track.scrollLeft / w)));
+    tabs.forEach((b, i) => b.classList.toggle('active', i === idx));
+    state.rpSection = names[idx];
+  }, { passive: true });
+
+  tabs.forEach((btn, i) => {
+    btn.addEventListener('click', () => {
+      track.scrollTo({ left: i * track.offsetWidth, behavior: 'smooth' });
+    });
+  });
 }
 
 function renderPartyAnalysis() {
@@ -839,6 +854,8 @@ function renderRPLog() {
   updateRankBanner();
   renderAnalysisCard();
   renderRPLogList();
+  renderAnalysisSection();
+  renderCharaSection();
 }
 
 // ─── BR LOG ───────────────────────────────────────────────────────────────────
@@ -1003,9 +1020,9 @@ function showBarPopup(text, x, y) {
 
 // ─── Bar SVG builder ──────────────────────────────────────────────────────────
 
-function buildBarSVG(data, { noYLabels = false, allPositive = false, onBarClick = null } = {}) {
+function buildBarSVG(data, { allPositive = false, onBarClick = null } = {}) {
   const W = 320, H = 150;
-  const PL = noYLabels ? 6 : 38, PR = 8, PT = 14, PB = noYLabels ? 24 : 36;
+  const PL = 38, PR = 8, PT = 14, PB = 46;
   const CW = W - PL - PR, CH = H - PT - PB;
   const maxAbs = Math.max(...data.map(d => Math.abs(d.value)), 1);
   const zeroY  = allPositive ? H - PB : PT + CH / 2;
@@ -1013,12 +1030,10 @@ function buildBarSVG(data, { noYLabels = false, allPositive = false, onBarClick 
 
   const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}` });
 
-  if (!noYLabels) {
-    svg.appendChild(svgEl('line', { x1: PL, y1: PT, x2: PL, y2: H-PB, stroke: '#1a1714', 'stroke-width': 1 }));
-    svg.appendChild(svgText(allPositive ? String(maxAbs) : fmtRP(maxAbs), { x: PL-4, y: PT+4, 'text-anchor': 'end', 'font-size': 8, fill: '#8a8680' }));
-    if (!allPositive) svg.appendChild(svgText(fmtRP(-maxAbs), { x: PL-4, y: H-PB-2, 'text-anchor': 'end', 'font-size': 8, fill: '#8a8680' }));
-    svg.appendChild(svgText('0', { x: PL-4, y: zeroY+4, 'text-anchor': 'end', 'font-size': 8, fill: '#8a8680' }));
-  }
+  svg.appendChild(svgEl('line', { x1: PL, y1: PT, x2: PL, y2: H-PB, stroke: '#1a1714', 'stroke-width': 1 }));
+  svg.appendChild(svgText(allPositive ? String(maxAbs) : fmtRP(maxAbs), { x: PL-4, y: PT+4, 'text-anchor': 'end', 'font-size': 8, fill: '#8a8680' }));
+  if (!allPositive) svg.appendChild(svgText(fmtRP(-maxAbs), { x: PL-4, y: H-PB-2, 'text-anchor': 'end', 'font-size': 8, fill: '#8a8680' }));
+  svg.appendChild(svgText('0', { x: PL-4, y: zeroY+4, 'text-anchor': 'end', 'font-size': 8, fill: '#8a8680' }));
   svg.appendChild(svgEl('line', { x1: PL, y1: zeroY, x2: W-PR, y2: zeroY, stroke: '#1a1714', 'stroke-width': 1 }));
 
   const slotW = CW / data.length;
@@ -1150,8 +1165,8 @@ function renderBarPanels() {
     showBarPopup(text, e.clientX, e.clientY);
   };
 
-  setPanel('bar-p0', hasData(hourly) ? buildBarSVG(hourly, { noYLabels: true, onBarClick: hourlyClick }) : null);
-  setPanel('bar-p1', hasData(slot4)  ? buildBarSVG(slot4)                                               : null);
+  setPanel('bar-p0', hasData(hourly) ? buildBarSVG(hourly, { onBarClick: hourlyClick }) : null);
+  setPanel('bar-p1', hasData(slot4)  ? buildBarSVG(slot4)                              : null);
 }
 
 // ─── Emotion panels ───────────────────────────────────────────────────────────
@@ -1251,10 +1266,8 @@ function init() {
     });
   });
 
-  // RP section tabs
-  document.querySelectorAll('#rp-section-tabs .seg-btn').forEach(btn => {
-    btn.addEventListener('click', () => showRPSection(btn.dataset.rpsection));
-  });
+  // RP sections h-scroll
+  initRPSections();
 
   // Bar period
   document.querySelectorAll('.period-row .seg-btn').forEach(btn => {
@@ -1294,6 +1307,12 @@ function init() {
     trackId: 'bar-track', leftId: 'bar-left', rightId: 'bar-right', labelId: 'bar-label',
     labels: ['1時間ごと', '朝昼夜深夜'],
     initPanel: 1,
+  });
+  // br: kill/death=p0, chara=p1
+  setupHScroll({
+    trackId: 'br-chart-track', leftId: 'br-left', rightId: 'br-right', labelId: 'br-label',
+    labels: ['キル / 死因', 'キャラ別'],
+    initPanel: 0,
   });
   // emo: 感情分布 → 平均RP → 回数
   setupHScroll({

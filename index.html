@@ -110,10 +110,11 @@
         <button class="seg-btn" data-rpsection="chara">キャラ</button>
       </div>
 
-      <div class="view-scroll" id="rp-scroll">
+      <!-- H-scroll panels -->
+      <div class="rp-sections-track" id="rp-sections-track">
 
-        <!-- LOG SECTION -->
-        <div id="rp-log-section">
+        <!-- LOG PANEL -->
+        <div class="rp-section-panel" id="rp-panel-log">
           <div id="analysis-card" class="analysis-card"></div>
           <div class="seg-row filter-row" id="rp-filter-row">
             <button class="seg-btn active" data-filter="today">今日</button>
@@ -122,10 +123,11 @@
           </div>
           <div id="rp-hist-list"></div>
           <div id="rp-hist-empty" class="empty hidden">記録がありません</div>
+          <div class="bottom-pad"></div>
         </div>
 
-        <!-- ANALYSIS SECTION -->
-        <div id="rp-analysis-section" class="hidden">
+        <!-- ANALYSIS PANEL -->
+        <div class="rp-section-panel" id="rp-panel-analysis">
 
           <!-- Short log h-scroll -->
           <div class="graph-section">
@@ -170,15 +172,16 @@
           <!-- Long-term correlation analysis -->
           <div class="graph-section" id="long-term-analysis-section"></div>
 
+          <div class="bottom-pad"></div>
         </div>
 
-        <!-- CHARA SECTION -->
-        <div id="rp-chara-section" class="hidden">
+        <!-- CHARA PANEL -->
+        <div class="rp-section-panel" id="rp-panel-chara">
           <div id="chara-list"></div>
           <div id="chara-empty" class="empty hidden">キャラデータなし</div>
+          <div class="bottom-pad"></div>
         </div>
 
-        <div class="bottom-pad"></div>
       </div>
     </div>
 
@@ -187,45 +190,59 @@
       <header class="app-header">
         <span class="h-title">BR LOG</span>
       </header>
-      <div class="view-scroll">
 
-        <!-- Overview stats -->
-        <div class="br-stats-row">
-          <div class="br-stat">
-            <div class="br-stat-label">平均キル</div>
-            <div class="br-stat-val" id="br-avg-kill">0.0</div>
+      <!-- Overview stats -->
+      <div class="br-stats-row">
+        <div class="br-stat">
+          <div class="br-stat-label">平均キル</div>
+          <div class="br-stat-val" id="br-avg-kill">0.0</div>
+        </div>
+        <div class="br-stat">
+          <div class="br-stat-label">最多キル</div>
+          <div class="br-stat-val" id="br-max-kill">0</div>
+        </div>
+        <div class="br-stat">
+          <div class="br-stat-label">総試合</div>
+          <div class="br-stat-val" id="br-total">0</div>
+        </div>
+      </div>
+
+      <!-- Page nav -->
+      <div class="br-page-nav">
+        <button class="chart-pg-btn" id="br-left">◀</button>
+        <span class="chart-pg-label" id="br-label">キル / 死因</span>
+        <button class="chart-pg-btn" id="br-right">▶</button>
+      </div>
+
+      <!-- H-scroll chart pages -->
+      <div class="h-scroll-track br-chart-track" id="br-chart-track">
+
+        <!-- Page 1: Kill dist + Death dist -->
+        <div class="br-chart-panel" id="br-p0">
+          <div class="graph-section">
+            <div class="graph-title" style="margin-bottom:12px">キル数分布</div>
+            <div id="br-kill-chart"></div>
           </div>
-          <div class="br-stat">
-            <div class="br-stat-label">最多キル</div>
-            <div class="br-stat-val" id="br-max-kill">0</div>
+          <div class="graph-section">
+            <div class="graph-title" style="margin-bottom:12px">死因分布</div>
+            <div id="br-death-chart"></div>
           </div>
-          <div class="br-stat">
-            <div class="br-stat-label">総試合</div>
-            <div class="br-stat-val" id="br-total">0</div>
+          <div class="bottom-pad"></div>
+        </div>
+
+        <!-- Page 2: Char kill + Char RP -->
+        <div class="br-chart-panel" id="br-p1">
+          <div class="graph-section">
+            <div class="graph-title" style="margin-bottom:12px">キャラ別 平均キル</div>
+            <div id="br-chara-kill-chart"></div>
           </div>
+          <div class="graph-section">
+            <div class="graph-title" style="margin-bottom:12px">キャラ別 平均RP</div>
+            <div id="br-chara-rp-chart"></div>
+          </div>
+          <div class="bottom-pad"></div>
         </div>
 
-        <div class="graph-section">
-          <div class="graph-title" style="margin-bottom:12px">キル数分布</div>
-          <div id="br-kill-chart"></div>
-        </div>
-
-        <div class="graph-section">
-          <div class="graph-title" style="margin-bottom:12px">死因分布</div>
-          <div id="br-death-chart"></div>
-        </div>
-
-        <div class="graph-section">
-          <div class="graph-title" style="margin-bottom:12px">キャラ別 平均キル</div>
-          <div id="br-chara-kill-chart"></div>
-        </div>
-
-        <div class="graph-section">
-          <div class="graph-title" style="margin-bottom:12px">キャラ別 平均RP</div>
-          <div id="br-chara-rp-chart"></div>
-        </div>
-
-        <div class="bottom-pad"></div>
       </div>
     </div>
 
